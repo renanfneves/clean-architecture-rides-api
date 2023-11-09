@@ -1,0 +1,65 @@
+// This is your Prisma schema file
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  account_id         String  @id @default(uuid())
+  name               String
+  email              String
+  cpf                String
+  car_plate          String?
+  is_passenger       Boolean @default(false)
+  is_driver          Boolean @default(false)
+  password           String
+  password_algorithm String
+  salt               String
+  driverRides        Ride[]  @relation("DriverToRide")
+  passengerRides     Ride[]  @relation("PassengerToRide")
+
+  @@map("accounts")
+}
+
+enum Ride_Statuses {
+  requested
+  accepted
+  ongoing
+  completed
+}
+
+model Ride {
+  ride_id      String        @id @default(uuid())
+  passenger_id String
+  driver_id    String?
+  status       Ride_Statuses @default(requested)
+  fare         Decimal?
+  distance     Decimal?
+  from_lat     Decimal
+  from_long    Decimal
+  to_lat       Decimal
+  to_long      Decimal
+  date         DateTime      @default(now())
+  passenger    Account       @relation("PassengerToRide", fields: [passenger_id], references: [account_id])
+  driver       Account?      @relation("DriverToRide", fields: [driver_id], references: [account_id])
+  Position     Position[]
+
+  @@map("rides")
+}
+
+model Position {
+  position_id String   @id @default(uuid())
+  ride        Ride     @relation(fields: [rideRide_id], references: [ride_id])
+  lat         Decimal
+  long        Decimal
+  date        DateTime
+  rideRide_id String
+
+  @@map("positions")
+}
